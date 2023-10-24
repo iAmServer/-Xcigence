@@ -10,39 +10,14 @@ function convertToDesiredFormat($array, $status)
     return $formattedArray;
 }
 
-$json = file_get_contents('db/data.json');
-$data = json_decode($json);
-$report = $data->report_detail;
-$user = $data->Digital_User_Risk[0];
-$threat = $data->Threatened;
-
-
 $emails = array_merge(
     convertToDesiredFormat($user->email_at_risk_low, "low"),
     convertToDesiredFormat($user->email_at_risk_medium, "medium"),
     convertToDesiredFormat($user->email_at_risk_high, "high")
 );
 shuffle($emails);
-
-$hacked_email_address = $user->hacked_email_address->hacked_email_address;
-foreach ($hacked_email_address as $email) {
-    list($email, $source) = explode(' [', $email);
-    $source = rtrim($source, ']');
-
-    $emailObject = [
-        'email' => trim($email),
-        'source' => trim($source)
-    ];
-
-    $hacked_email_address[] = $emailObject;
-}
-
-
 ?>
 
-<script>
-    console.log(<?php echo json_encode($hacked_email_address); ?>);
-</script>
 
 <div class="w-full px-6 py-6 mx-auto">
     <div class="flex flex-wrap mt-6 -mx-3">
@@ -54,12 +29,11 @@ foreach ($hacked_email_address as $email) {
                         <div class="flex-none w-2/3 max-w-full px-3">
                             <div>
                                 <p class="mb-0 font-sans text-sm font-semibold leading-normal uppercase">
-                                    Today's Money</p>
-                                <h5 class="mb-2 font-bold">$53,000</h5>
-                                <p class="mb-0">
-                                    <span class="text-sm font-bold leading-normal text-emerald-500">+55%</span>
-                                    since yesterday
-                                </p>
+                                    Threat Level</p>
+                                <h5 class="mb-2 font-bold">
+                                    <?php echo
+                                        $report->status; ?>
+                                </h5>
                             </div>
                         </div>
                         <div class="px-3 text-right basis-1/3">
@@ -81,12 +55,11 @@ foreach ($hacked_email_address as $email) {
                         <div class="flex-none w-2/3 max-w-full px-3">
                             <div>
                                 <p class="mb-0 font-sans text-sm font-semibold leading-normal uppercase">
-                                    Today's Users</p>
-                                <h5 class="mb-2 font-bold">2,300</h5>
-                                <p class="mb-0">
-                                    <span class="text-sm font-bold leading-normal text-emerald-500">+3%</span>
-                                    since last week
-                                </p>
+                                    Threat Score</p>
+                                <h5 class="mb-2 font-bold">
+                                    <?php echo
+                                        $report->final_score; ?>
+                                </h5>
                             </div>
                         </div>
                         <div class="px-3 text-right basis-1/3">
@@ -108,12 +81,13 @@ foreach ($hacked_email_address as $email) {
                         <div class="flex-none w-2/3 max-w-full px-3">
                             <div>
                                 <p class="mb-0 font-sans text-sm font-semibold leading-normal uppercase">
-                                    New Clients</p>
-                                <h5 class="mb-2 font-bold">+3,462</h5>
-                                <p class="mb-0">
-                                    <span class="text-sm font-bold leading-normal text-red-600">-2%</span>
-                                    since last quarter
-                                </p>
+                                    Hacked Users</p>
+                                <h5 class="mb-2 font-bold">
+                                    <?php
+                                    echo count($hacked_emails);
+                                    ?>
+                                </h5>
+
                             </div>
                         </div>
                         <div class="px-3 text-right basis-1/3">
@@ -135,12 +109,20 @@ foreach ($hacked_email_address as $email) {
                         <div class="flex-none w-2/3 max-w-full px-3">
                             <div>
                                 <p class="mb-0 font-sans text-sm font-semibold leading-normal uppercase">
-                                    Sales</p>
-                                <h5 class="mb-2 font-bold">$103,430</h5>
-                                <p class="mb-0">
-                                    <span class="text-sm font-bold leading-normal text-emerald-500">+5%</span>
-                                    than last month
-                                </p>
+                                    Vulnerability</p>
+                                <h5 class="mb-2 font-bold">
+                                    <?php
+                                    if ($report->Low_vuln === "1") {
+                                        echo "Low";
+                                    } else if ($report->Medium_vuln === "1") {
+                                        echo "Medium";
+                                    } else if ($report->High_vuln === "1") {
+                                        echo "High";
+                                    } else {
+                                        echo "Critical";
+                                    }
+                                    ?>
+                                </h5>
                             </div>
                         </div>
                         <div class="px-3 text-right basis-1/3">
@@ -218,7 +200,7 @@ foreach ($hacked_email_address as $email) {
     <div class="flex flex-wrap mt-6 -mx-3">
         <div class="w-full max-w-full px-3 mt-0 lg:w-7/12 lg:flex-none">
             <div
-                class="border-black/12.5 shadow-xl relative z-20 flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border mb-6 lg:mb-0">
+                class="border-black/12.5 shadow-xl relative z-20 flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border mb-6 lg:mb-0 min-h-[300px]">
                 <div class="border-black/12.5 mb-0 rounded-t-2xl border-b-0 border-solid px-6 py-8">
                     <h2 class="text-xl font-semibold">Website Vulnerability Details</h2>
                     <ul class="flex gap-2 items-center text-sm">
@@ -260,6 +242,59 @@ foreach ($hacked_email_address as $email) {
                         </li>
                     </ul>
                 </div>
+            </div>
+        </div>
+
+        <div class="w-full max-w-full px-3 mt-0 lg:w-5/12 lg:flex-none">
+            <div
+                class="border-black/12.5 shadow-xl relative z-20 flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border mb-6 lg:mb-0 min-h-[300px]">
+                <div class="border-black/12.5 mb-0 rounded-t-2xl border-b-0 border-solid px-6 py-8">
+                    <h2 class="text-xl font-semibold">System Defense</h2>
+
+
+                    <p class="text-sm mt-0 mb-4">
+                        <?php echo $threat->system_defense ?>
+                    </p>
+                    <ul class="flex flex-col gap-y-2">
+                        <li>
+                            <?php
+                            echo $threat->system_defense_description;
+                            ?>
+                        </li>
+                        <!-- <li class="my-2">
+                            <hr />
+                        </li>
+                        <li class="flex flex-col"><strong class="font-semibold  text-lg">Solution</strong>
+                            <?php
+                            echo $report->Vulnerability[0]->solution;
+                            ?>
+                        </li> -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-wrap mt-6 -mx-3">
+
+
+        <div class="w-full max-w-full px-3 mt-0 lg:w-7/12 lg:flex-none">
+            <div
+                class="relative flex flex-col min-w-0 p-4 break-words bg-white border-0 border-solid shadow-xl border-black-125 rounded-2xl bg-clip-border">
+                <div class="p-4 pb-0 mb-4 rounded-t-4">
+                    <h2 class="text-xl font-semibold">Threat Levels</h2>
+                </div>
+
+                <canvas id="threatChart" height="300"></canvas>
+            </div>
+        </div>
+        <div class="w-full max-w-full px-3 lg:mt-0 lg:w-5/12 lg:flex-none mt-6">
+            <div
+                class="relative flex p-4 flex-col min-w-0 break-words bg-white border-0 border-solid shadow-xl border-black-125 rounded-2xl bg-clip-border">
+                <div class="p-4 pb-0 mb-4 rounded-t-4">
+                    <h2 class="text-xl font-semibold">Users Location</h2>
+                </div>
+                <canvas id="canvas" height="300"></canvas>
             </div>
         </div>
     </div>
@@ -322,26 +357,31 @@ foreach ($hacked_email_address as $email) {
         </div>
         <div class="w-full max-w-full px-3 mt-0 lg:w-5/12 lg:flex-none">
             <div
-                class="border-black/12.5 shadow-xl relative flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border">
-                <div class="p-4 pb-0 rounded-t-4">
-                    <h6 class="mb-0">Possible Hacked Users</h6>
+                class="border-black/12.5 shadow-xl relative flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border py-4">
+                <div class="px-2 pb-0 rounded-t-4">
+                    <h6 class="mb-0 font-semibold">Hacked Users</h6>
                 </div>
-                <table class="items-center w-full mb-4 align-top border-collapse border-gray-200 ">
+                <table class="items-center w-full mb-4 align-top border-collapse border-gray-200 mt-4">
                     <thead>
                         <tr>
-                            <th class="text-start">Email</th>
+                            <th class="text-start px-2">Email</th>
                             <th class="text-start">Channel</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
-                        foreach ($hacked_email_address as $email) {
+                        foreach ($hacked_emails as $email) {
 
                             ?>
                             <tr class="border-b last:border-0">
                                 <td class="p-2.5 align-middle bg-transparent whitespace-nowrap ">
+                                    <?php echo $email['email']; ?>
                                 </td>
                                 <td class="p-2.5 align-middle bg-transparent whitespace-nowrap ">
+                                    <?php echo $email['source']; ?>
+                                    <a href="http://www.<?php echo $email['source']; ?>" class="mr-2" target="_blank">
+                                        <i class="fa fa-external-link-alt text-blue-500"></i>
+                                    </a>
                                 </td>
                             </tr>
                             <?php
@@ -349,6 +389,23 @@ foreach ($hacked_email_address as $email) {
                         ?>
                     </tbody>
                 </table>
+            </div>
+
+            <div
+                class="border-black/12.5m shadow-xl mt-6 relative flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border py-4">
+                <div class="px-4 pb-0 rounded-t-4 mb-2">
+                    <h6 class="mb-0 font-semibold">Solution</h6>
+                </div>
+                <ol class="list-decimal flex flex-col gap-y-1 px-8">
+                    <?php
+                    $lines = explode('.', $user->email_risks_solution);
+
+                    foreach ($lines as $line) {
+                        if ($line !== ' ') {
+                            echo "<li class='text-slate-500'>" . trim($line) . "</li>";
+                        }
+                    } ?>
+                </ol>
             </div>
         </div>
     </div>
